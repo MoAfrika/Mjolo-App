@@ -88,7 +88,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* New Connection Question Styles */
         .question-card {
             background-color: #f9fafb;
             border-radius: 0.75rem;
@@ -290,17 +289,29 @@
             let matches = JSON.parse(localStorage.getItem('mjoloMatches')) || [];
             let currentProfileIndex = 0;
             const connectionQuestion = "What's a small thing that always makes you smile?";
+            let profiles = []; // This will now be populated from our database!
 
             // --- DATA ---
-            const profiles = [
-                { id: 1, name: 'Thandi', age: 28, location: 'Johannesburg', bio: 'Lover of good food, amapiano, and exploring the city.', img: 'https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: true, question: connectionQuestion, answer: "The smell of rain on a hot day. It's called petrichor!" },
-                { id: 2, name: 'Jaco', age: 32, location: 'Cape Town', bio: 'Hiking up Lion\'s Head on a Saturday morning is my happy place.', img: 'https://images.pexels.com/photos/1462935/pexels-photo-1462935.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: false, question: connectionQuestion, answer: "Seeing an old couple holding hands. Goals, right?" },
-                { id: 3, name: 'Lerato', age: 25, location: 'Durban', bio: 'Beach days are the best days.', img: 'https://images.pexels.com/photos/3775164/pexels-photo-3775164.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: false, question: connectionQuestion, answer: "My dog greeting me at the door like I've been away for years." },
-                { id: 4, name: 'Bongani', age: 30, location: 'Pretoria', bio: 'Braai master and rugby fan.', img: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: true, question: connectionQuestion, answer: "Finding money in a jacket I haven't worn in a while." },
-                { id: 5, name: 'Anika', age: 29, location: 'Stellenbosch', bio: 'Wine tasting, art galleries, and long conversations.', img: 'https://images.pexels.com/photos/4006576/pexels-photo-4006576.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: false, question: connectionQuestion, answer: "The first sip of coffee in the morning. It's pure magic." },
-                { id: 6, name: 'Sizwe', age: 27, location: 'Soweto', bio: 'Creative, ambitious, and passionate about music production.', img: 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=600', mutuallyLikes: false, question: connectionQuestion, answer: "When a song I love comes on the radio unexpectedly." },
-            ];
+            // The hardcoded profiles array has been removed. We will fetch this from the server.
             
+            // --- NEW FUNCTION TO FETCH PROFILES ---
+            async function fetchProfiles() {
+                try {
+                    // This endpoint is automatically created by Netlify when you deploy the function.
+                    const response = await fetch('/.netlify/functions/get-profiles');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    profiles = await response.json();
+                } catch (error) {
+                    console.error("Could not fetch profiles:", error);
+                    // Optionally, show an error to the user on the screen.
+                    noMoreProfilesEl.innerHTML = `<h2 class="text-2xl font-semibold">Could not load profiles.</h2><p class="text-gray-500 mt-2">Please try again later.</p>`;
+                    noMoreProfilesEl.classList.remove('hidden');
+                }
+            }
+
+
             // --- AUTHENTICATION & ONBOARDING ---
             const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
             const eyeOffIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542 7 .847 0 1.67.127 2.454.364m-6.082 11.45a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 1.414l-1.414 1.414zM12 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" /></svg>`;
@@ -330,11 +341,16 @@
                 questionScreen.classList.remove('hidden');
             }
             
-            function showMainApp() {
+            // MODIFIED to be async to wait for profiles
+            async function showMainApp() {
                 questionScreen.classList.add('hidden');
                 authScreen.classList.add('hidden');
                 mainAppScreen.classList.remove('hidden');
                 mainAppScreen.classList.add('flex');
+                
+                // Fetch profiles from the database before showing the first card
+                await fetchProfiles();
+
                 matches = JSON.parse(localStorage.getItem('mjoloMatches')) || [];
                 switchToSwipeView();
                 renderNextCard(); 
@@ -349,6 +365,9 @@
                 authForm.reset();
                 localStorage.removeItem('mjoloMatches');
                 matches = [];
+                // Reset profiles and index when logging out
+                profiles = [];
+                currentProfileIndex = 0;
             }
             
             // --- MAIN APP LOGIC ---
@@ -439,7 +458,8 @@
 
             function renderNextCard() {
                 cardContainer.innerHTML = '';
-                if (currentProfileIndex >= profiles.length) {
+                 // Also check if profiles array exists and has content
+                if (!profiles || profiles.length === 0 || currentProfileIndex >= profiles.length) {
                     noMoreProfilesEl.classList.remove('hidden');
                     likeBtn.disabled = true; nopeBtn.disabled = true;
                     likeBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -474,10 +494,15 @@
                 const card = cardContainer.querySelector('.card-entering');
                 if (!card) return;
                 const currentProfile = profiles[currentProfileIndex];
+                
+                // This logic may need to be updated depending on how you handle matches on the backend.
+                // For now, we'll keep the client-side 'mutuallyLikes' for demonstration.
+                const mutuallyLikes = Math.random() > 0.7; // Simulate a 30% match chance for demo
+
                 card.classList.remove('card-entering');
                 if (direction === 'right') {
                     card.classList.add('card-exiting-right');
-                    if (currentProfile.mutuallyLikes) {
+                    if (mutuallyLikes) { // Use simulated value
                         setTimeout(() => showMatch(currentProfile), 250);
                     }
                 } else {
@@ -495,9 +520,10 @@
                 const password = authPasswordInput.value;
 
                 if (isLoginMode) {
+                    // In a real app, this would be an API call to your backend for authentication
                     if (email === 'skotch.ntilane@gmail.com' && password === 'Virtual13!') {
                         authError.classList.add('hidden');
-                        showMainApp();
+                        showMainApp(); // showMainApp will now fetch profiles
                     } else {
                         authError.textContent = 'Invalid email or password.';
                         authError.classList.remove('hidden');
@@ -515,6 +541,7 @@
                         return;
                     }
                     authError.classList.add('hidden');
+                    // In a real app, you would make an API call here to register the user
                     showQuestionScreen();
                 }
             });
@@ -523,6 +550,7 @@
                     alert("Please answer the question to continue.");
                     return;
                 }
+                // In a real app, you'd save this answer to the user's profile in the database
                 showMainApp();
             });
             logoutBtn.addEventListener('click', showAuthScreen);
@@ -552,6 +580,4 @@
     </script>
 </body>
 </html>
-
-
 
