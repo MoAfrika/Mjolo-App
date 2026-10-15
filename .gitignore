@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+var/
+dist/
+.netlify/
+coverage/
+test-results/
+supabase/.temp/
+supabase/.branches/
+*.tsbuildinfo
+__pycache__/

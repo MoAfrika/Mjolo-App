@@ -1,0 +1,33 @@
+name: Validate Mjolo
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build frontend and type-check server code
+        run: npm run build
+      - name: Unit and image validation
+        run: npm test
+      - name: Staging safety and secret-confinement checks
+        run: npm run staging:check-tools
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
