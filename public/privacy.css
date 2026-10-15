@@ -1,0 +1,47 @@
+:root {
+  color-scheme: light dark;
+}
+body {
+  font:
+    16px/1.8 system-ui,
+    sans-serif;
+  margin: 0;
+  background: #faf8f5;
+  color: #302631;
+}
+main {
+  max-width: 760px;
+  margin: auto;
+  padding: 50px 24px;
+}
+h1,
+h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  line-height: 1.2;
+}
+h1 {
+  font-size: 44px;
+}
+h2 {
+  font-size: 28px;
+  margin-top: 40px;
+}
+a {
+  color: #792f52;
+}
+p {
+  color: #625965;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #19131e;
+    color: #f1e8ed;
+  }
+  p {
+    color: #c9bac9;
+  }
+  a {
+    color: #e69ebd;
+  }
+}
